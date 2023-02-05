@@ -1,13 +1,19 @@
 #include <iostream>
 using namespace std;
 int main(){
-    string s="maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?";
-    for(int i=0;i<s.size();i++){
-        for(auto c:"flyers"){
-            if(c==s[i]){
-                cout<<i<<' '<<c<<endl;
-                continue;
-            }
-        }
-    }
+    string s="59b997fa";
+    for(auto c:s){
+        cout<<hex<<(int)c<<endl;
+    }    
+    /*
+35
+39
+62
+39
+39
+37
+66
+61
+    */
+    return 0;
 }
