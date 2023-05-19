@@ -16,7 +16,7 @@ CSAPP3e Course Labs Files. Downloaded from [HERE](http://csapp.cs.cmu.edu/3e/lab
 README, Writeup, Release Notes, Self-Study Handout are included in each folder.
 
 ### Finish List
-- - `Lab01-Datalab`: finished
-- - `Lab02-Bomblab`: finished (一个炸弹得拆几个小时。。)
-- - `Lab03-Attacklab`:finished (有点难。。)
+- `Lab01-Datalab`: finished
+- `Lab02-Bomblab`: finished (一个炸弹得拆几个小时。。)
+- `Lab03-Attacklab`:finished (有点难。。)
 - `Lab06-Performancelab`:正在写
