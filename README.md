@@ -19,4 +19,4 @@ README, Writeup, Release Notes, Self-Study Handout are included in each folder.
 - `Lab01-Datalab`: finished
 - `Lab02-Bomblab`: finished (一个炸弹得拆几个小时。。)
 - `Lab03-Attacklab`:finished (有点难。。)
-- `Lab06-Performancelab`:正在写
+- `Lab06-Performancelab`:完成
