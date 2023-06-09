@@ -22,6 +22,37 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
+    if(M==32){
+        int d=8;
+        for(int i=0;i<N;i+=d){
+            for(int j=0;j<N;j+=d){
+                for(int ii=0;ii<d;ii++){
+                    int a[8]={0};
+                    for(int jj=0;jj<d;jj++){
+                        a[jj]=A[i+ii][j+jj];
+                    }
+                    for(int jj=0;jj<d;jj++){
+                        B[jj+j][i+ii]=a[jj];
+                    }
+                }
+            }
+        }
+    }else if(M==64){
+        int d=4;
+        for(int i=0;i<N;i+=d){
+            for(int j=0;j<N;j+=d){
+                for(int ii=0;ii<d;ii++){
+                    int a[4]={0};
+                    for(int jj=0;jj<d;jj++){
+                        a[jj]=A[i+ii][j+jj];
+                    }
+                    for(int jj=0;jj<d;jj++){
+                        B[jj+j][i+ii]=a[jj];
+                    }
+                }
+            }
+        }
+    }
 }
 
 /* 
@@ -43,7 +74,22 @@ void trans(int M, int N, int A[N][M], int B[M][N])
             B[j][i] = tmp;
         }
     }    
+}
 
+char trans1_desc[]="trans1";
+void trans1(int M,int N,int A[N][M],int B[M][N]){
+    if(M==N){
+        int d=4;
+        for(int i=0;i<N;i+=d){
+            for(int j=0;j<N;j+=d){
+                for(int ii=0;ii<d;ii++)
+                    for(int jj=0;jj<d;jj++){
+                        int jjj=jj+j,iii=ii+i;
+                        B[jjj][iii]=A[iii][jjj];
+                    }
+            }
+        }
+    }
 }
 
 /*
@@ -57,10 +103,7 @@ void registerFunctions()
 {
     /* Register your solution function */
     registerTransFunction(transpose_submit, transpose_submit_desc); 
-
-    /* Register any additional transpose functions */
-    registerTransFunction(trans, trans_desc); 
-
+    // registerTransFunction(&trans1,trans1_desc);
 }
 
 /* 
