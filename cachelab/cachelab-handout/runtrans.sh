@@ -6,5 +6,5 @@ echo ""
 echo "N64M64"
 ./test-trans -N 64 -M 64
 echo ""
-# echo "N67M61"
-# ./test-trans -N 67 -M 61
+echo "N67M61"
+./test-trans -N 67 -M 61

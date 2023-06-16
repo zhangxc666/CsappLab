@@ -38,20 +38,43 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
         }
     }else if(M==64){
-        int d=4;
+        int d=8;
         for(int i=0;i<N;i+=d){
             for(int j=0;j<N;j+=d){
-                for(int ii=0;ii<d;ii++){
-                    int a[4]={0};
-                    for(int jj=0;jj<d;jj++){
+                for(int ii=0;ii<4;ii++){
+                    int temp[8]={0};
+                    for(int jj=0;jj<8;jj++)temp[jj]=A[i+ii][j+jj];
+                    for(int jj=0;jj<4;jj++)B[j+jj][ii+i]=temp[jj],B[j+jj][ii+4+i]=temp[jj+4];
+                }
+                for(int ii=0;ii<4;ii++){
+                    int temp[8]={0};
+                    for(int jj=0;jj<4;jj++)temp[jj]=A[i+jj+4][j+ii];
+                    for(int jj=0;jj<4;jj++)temp[jj+4]=B[j+ii][i+jj+4];
+                    for(int jj=0;jj<4;jj++)B[j+ii][i+jj+4]=temp[jj];
+                    for(int jj=0;jj<4;jj++)B[j+ii+4][i+jj]=temp[jj+4];
+                }
+                for(int ii=0;ii<4;ii++){
+                    int temp[4]={0};
+                    for(int jj=0;jj<4;jj++)temp[jj]=A[ii+i+4][jj+j+4];
+                    for(int jj=0;jj<4;jj++)B[jj+j+4][ii+i+4]=temp[jj];
+                }
+                
+            }
+        }
+    }else{
+        int d=14;
+        for(int i=0;i<N;i+=d)
+            for(int j=0;j<N;j+=d){
+                for(int ii=0;ii+i<N && ii<d;ii++){
+                    int a[14]={0};
+                    for(int jj=0;j+jj<N && jj<d;jj++){
                         a[jj]=A[i+ii][j+jj];
                     }
-                    for(int jj=0;jj<d;jj++){
-                        B[jj+j][i+ii]=a[jj];
+                    for(int jj=0;j+jj<N && jj<d;jj++){
+                        B[j+jj][i+ii]=a[jj];
                     }
                 }
             }
-        }
     }
 }
 
