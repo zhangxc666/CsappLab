@@ -11,6 +11,8 @@
         "istream": "c",
         "numeric": "c",
         "ostream": "c",
-        "sstream": "c"
+        "sstream": "c",
+        "iostream": "cpp",
+        "sigaction.h": "c"
     }
 }

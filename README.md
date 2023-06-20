@@ -21,3 +21,4 @@ README, Writeup, Release Notes, Self-Study Handout are included in each folder.
 - `Lab03-Attacklab`:finished (有点难。。)
 - `Lab06-Performancelab`:finished
 - `Lab05-Cachelab`:finished （难度挺大，仍然有一点小问题，PartB部分的67*61局部变量使用较多）
+- `Lab07-Shelllab`:finished
