@@ -11,9 +11,6 @@ static void *next_fit(size_t);
 static void place(void *, size_t);       // 分割当前获取的空闲块
 static size_t getBlockSize(size_t size); // size是payload，返回实际开辟的块的大小
 static void debugAllBlock();      // 打印当前所有的块的情况
-static void insertLinkNode(void *);    // 插入当前结点至双链表头中
-static void removeLinkNode(void *);    // 删除当前结点
-static void printDoubleLinkList();     // 打印当前双链表情况
 /*
  * Students work in teams of one or two.  Teams enter their team name,
  * personal names and login IDs in a struct of this
@@ -30,4 +27,4 @@ typedef struct
 
 extern team_t team;
 static char *heap_listp;
-static char *head; // 显示双链表的头结点
+static char *next_fit_bp;
