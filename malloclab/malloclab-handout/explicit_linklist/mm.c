@@ -62,66 +62,30 @@ team_t team = {
 /*
  * mm_init - initialize the malloc package.
  */
-static void **getFreeListHead(int i){ 
-    if(i<=1)return &linkListHead[0];
-    else if(i<=(1<<2))return &linkListHead[1];
-    else if(i<=(1<<3))return &linkListHead[2];
-    else if(i<=(1<<4))return &linkListHead[3];
-    else if(i<=(1<<5))return &linkListHead[4];
-    else if(i<=(1<<6))return &linkListHead[5];
-    else if(i<=(1<<7))return &linkListHead[6];
-    else if(i<=(1<<8))return &linkListHead[7];
-    else if(i<=(1<<9))return &linkListHead[8];
-    else if(i<=(1<<10))return &linkListHead[9];
-    else if(i<=(1<<11))return &linkListHead[10];
-    else if(i<=(1<<12))return &linkListHead[11];
-    else if(i<=(1<<13))return &linkListHead[12];
-    else if(i<=(1<<14))return &linkListHead[13];
-    else if(i<=(1<<15))return &linkListHead[14];
-    else if(i<=(1<<16))return &linkListHead[15];
-    else if(i<=(1<<17))return &linkListHead[16];
-    else if(i<=(1<<18))return &linkListHead[17];
-    else if(i<=(1<<19))return &linkListHead[18];
-    else if(i<=(1<<20))return &linkListHead[19];
-    else if(i<=(1<<21))return &linkListHead[20];
-    else if(i<=(1<<22))return &linkListHead[21];
-    else if(i<=(1<<23))return &linkListHead[22];
-    else if(i<=(1<<24))return &linkListHead[23];
-    else if(i<=(1<<25))return &linkListHead[24];
-    else if(i<=(1<<26))return &linkListHead[25];
-    else if(i<=(1<<27))return &linkListHead[26];
-    else if(i<=(1<<28))return &linkListHead[27];
-    else if(i<=(1<<29))return &linkListHead[28];
-    else if(i<=(1<<30))return &linkListHead[29];
-    else if(i<=(1<<31))return &linkListHead[30];
-    else return &linkListHead[31];
-}
-
 static void insertLinkNode(void *bp){
     if(bp==NULL)return;
     PUT(SUCCESSOR_P(bp),NULL);
     PUT(PRECESSOR_P(bp),NULL);
-    void **head=getFreeListHead(GET_SIZE(HDRP(bp)));
-    if((*head)!=NULL){ // 若当前链表为空
-        PUT(PRECESSOR_P(*head),bp); // 设置原来的第一个结点的前驱指向新插入的结点
-        PUT(SUCCESSOR_P(bp),(*head)); // 设置新结点后继->原来的第一个结点
+    if(head!=NULL){ // 若当前链表为空
+        PUT(PRECESSOR_P(head),bp); // 设置原来的第一个结点的前驱指向新插入的结点
+        PUT(SUCCESSOR_P(bp),head); // 设置新结点后继->原来的第一个结点
     }
-    *head=bp;
-}
+    head=bp;
+    // printDoubleLinkList();
 
+}
 static void removeLinkNode(void *bp){
     if(bp==NULL || GET_ALLOC(HDRP(bp)))return;
-    void **head=getFreeListHead(GET_SIZE(HDRP(bp)));
     void *prev=GET_PRECESSOR(bp);
     void *next=GET_SUCCESSOR(bp);
     PUT(SUCCESSOR_P(bp),0);
     PUT(PRECESSOR_P(bp),0);
     if(prev==NULL && next==NULL){ // 若当前仅有一个结点
-        *head=NULL;
+        head=NULL;
     }
     else if(prev==NULL){ // 若当前是第一个结点
         PUT(PRECESSOR_P(next),0);
-        *head=next;
+        head=next;
     }
     else if(next==NULL){ // 若当前是最后一个结点
         PUT(SUCCESSOR_P(prev),0);
@@ -138,14 +102,15 @@ static void *extend_heap(size_t words)
     char *bp;
     size_t size;
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE; // 地址按双字对齐，若奇数，字节再加1
-    if ((long)(bp = mem_sbrk(size)) == -1){
+    if ((long)(bp = mem_sbrk(size)) == -1)
+    {
         return NULL;
     }
     // printf("--打印操作：进行 extend_heap 操作，扩充 %d 大小的内存，地址为 %p \n",size,bp);
     PUT(HDRP(bp), PACK(size, 0));           // 设置头部
     PUT(FTRP(bp), PACK(size, 0));           // 设置尾部
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));   // 设置结尾块
-    bp=coalesce(bp);            // 合并开辟的块，可自动插入
+    bp=coalesce(bp); 
     return bp;                  // 如果上一块是空闲块，合并上一块
 }
 static void *coalesce(void *bp)
@@ -183,19 +148,12 @@ static void *coalesce(void *bp)
 }
 static void* find_fit(size_t asize)
 {
-    void **head=getFreeListHead(asize);
-    int flag=0;
-    while (!flag)
+    for (void* bp = head; bp != 0; bp = GET_SUCCESSOR(bp))
     {
-        if(head==(void*)(&linkListHead[31]))flag=1;
-        for (void* bp = (*head); bp != NULL; bp = GET_SUCCESSOR(bp))
+        if (GET_SIZE(HDRP(bp)) >= asize)
         {
-            if (GET_SIZE(HDRP(bp)) >= asize)
-            {
-                return bp;
-            }
+            return bp;
         }
-        head++;
     }
     return NULL;
 }
@@ -243,8 +201,7 @@ int mm_init(void)
     PUT(heap_listp + (WSIZE *2), PACK(DSIZE, 1));   // 设置序言尾部大小
     PUT(heap_listp + (3 * WSIZE), PACK(0, 1));      // 设置结尾
     heap_listp += DSIZE;
-    // head=NULL; // 初始化head指针 -> 指向下一个链表头
-    for(int i=0;i<32;i++)linkListHead[i]=NULL;
+    head=NULL; // 初始化head指针 -> 指向下一个链表头
     // printf("--打印操作：开始初始化 当前 heap_listp 的地址为 %p \n",heap_listp);
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) // 初始化默认空闲块大小
         return -1;
@@ -319,4 +276,58 @@ void *mm_realloc(void *ptr, size_t re_size)
     mm_free(oldptr);                  // 释放旧的块
     // debugAllBlock();
     return newptr;                    // 返回新的块地址
+}
+static void debugAllBlock(){
+    char *bp;
+    printf("\n");
+    printf("---------------开始debug-------------------\n");
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    {
+        
+        int alloc=GET_ALLOC(HDRP(bp)),size=GET_SIZE(HDRP(bp));
+        printf("--当前%p位置的空闲块：\n",bp);
+        printf("--大小为：\t%d\n",size);
+        printf("--分配状态：\t%s\n",(alloc)?"是":"否");
+        printf("\n");
+    }
+    printf("--结尾块地址：%p \n",bp);
+    printf("\n");
+    printf("---------------结束debug-------------------\n");
+    printf("\n");
+}
+static void printDoubleLinkList(){
+    char *bp=head;
+    printf("\n");
+    printf("---------------开始打印链表-------------------\n");
+    printf("--打印操作：双链表\n");
+    while(bp){
+        printf("--%p\n",bp);
+        bp=GET_SUCCESSOR(bp);
+    }
+    printf("---------------开始打印链表-------------------\n");
+    printf("\n");
+    return;
+}
+static void *next_fit(size_t new_size){// Perf index = 44 (util) + 40 (thru) = 84/100
+    // void *bp=next_fit_bp;
+    // while(1){
+    //     if((GET_ALLOC(HDRP(bp))==0) && (new_size<= GET_SIZE(HDRP(bp)))){
+    //         next_fit_bp=bp;
+    //         return bp;
+    //     }
+    //     if(GET_SIZE(HDRP(bp))==0)bp=heap_listp;
+    //     else bp=NEXT_BLKP(bp);
+    //     if(bp==next_fit_bp)break;
+    // }
+    return NULL;
+}
+static void *best_fit(size_t new_size){// Perf index = 45 (util) + 22 (thru) = 67/100
+    void *bp;
+    void *best_fit_bp=NULL;
+    for(bp=heap_listp;GET_SIZE(HDRP(bp))>0;bp=NEXT_BLKP(bp)){
+        if(GET_ALLOC(HDRP(bp))==0 && ((new_size<=(GET_SIZE(HDRP(bp)))) &&(best_fit_bp==NULL || GET_SIZE(HDRP(best_fit_bp))>=GET_SIZE(HDRP(bp))))){
+            best_fit_bp=bp;
+        }
+    }
+    return best_fit_bp;
 }

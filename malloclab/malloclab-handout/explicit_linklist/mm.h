@@ -13,7 +13,7 @@ static size_t getBlockSize(size_t size); // size是payload，返回实际开辟�
 static void debugAllBlock();      // 打印当前所有的块的情况
 static void insertLinkNode(void *);    // 插入当前结点至双链表头中
 static void removeLinkNode(void *);    // 删除当前结点
-static void **getFreeListHead(int i);   // 获取空闲链表头
+static void printDoubleLinkList();     // 打印当前双链表情况
 /*
  * Students work in teams of one or two.  Teams enter their team name,
  * personal names and login IDs in a struct of this
@@ -30,4 +30,4 @@ typedef struct
 
 extern team_t team;
 static char *heap_listp;
-static char *linkListHead[32]={0}; // 显示双链表的头结点
+static char *head; // 显示双链表的头结点

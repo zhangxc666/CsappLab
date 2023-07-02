@@ -22,3 +22,4 @@ README, Writeup, Release Notes, Self-Study Handout are included in each folder.
 - `Lab06-Performancelab`:finished
 - `Lab05-Cachelab`:finished （难度挺大，仍然有一点小问题，PartB部分的67*61局部变量使用较多）
 - `Lab07-Shelllab`:finished
+- `Lab08-Malloclab`:finished （使用隐式链表，显示链表，分离链表，之后有时间会写堆或者平衡树或进行其他技巧优化）
