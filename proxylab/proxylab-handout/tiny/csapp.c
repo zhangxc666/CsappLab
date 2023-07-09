@@ -23,7 +23,6 @@
  */
 /* $begin csapp.c */
 #include "csapp.h"
-
 /************************** 
  * Error-handling functions
  **************************/
@@ -42,7 +41,7 @@ void posix_error(int code, char *msg) /* Posix-style error */
     exit(0);
 }
 
-void gai_error(int code, char *msg) /* Getaddrinfo-style error */
+void _gai_error(int code, char *msg) /* Getaddrinfo-style error */
 {
     fprintf(stderr, "%s: %s\n", msg, gai_strerror(code));
     exit(0);
@@ -155,7 +154,7 @@ handler_t *Signal(int signum, handler_t *handler)
 
     action.sa_handler = handler;  
     sigemptyset(&action.sa_mask); /* Block sigs of type being handled */
-    action.sa_flags = SA_RESTART; /* Restart syscalls if possible */
+    action.sa_flags = 0x10000000; /* Restart syscalls if possible */
 
     if (sigaction(signum, &action, &old_action) < 0)
 	unix_error("Signal error");
@@ -605,7 +604,7 @@ void Getaddrinfo(const char *node, const char *service,
     int rc;
 
     if ((rc = getaddrinfo(node, service, hints, res)) != 0) 
-        gai_error(rc, "Getaddrinfo error");
+        _gai_error(rc, "Getaddrinfo error");
 }
 /* $end getaddrinfo */
 
@@ -616,7 +615,7 @@ void Getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 
     if ((rc = getnameinfo(sa, salen, host, hostlen, serv, 
                           servlen, flags)) != 0) 
-        gai_error(rc, "Getnameinfo error");
+        _gai_error(rc, "Getnameinfo error");
 }
 
 void Freeaddrinfo(struct addrinfo *res)
@@ -960,13 +959,11 @@ int open_clientfd(char *hostname, char *port) {
         fprintf(stderr, "getaddrinfo failed (%s:%s): %s\n", hostname, port, gai_strerror(rc));
         return -2;
     }
-  
     /* Walk the list for one that we can successfully connect to */
     for (p = listp; p; p = p->ai_next) {
         /* Create a socket descriptor */
         if ((clientfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) 
             continue; /* Socket failed, try the next */
-
         /* Connect to the server */
         if (connect(clientfd, p->ai_addr, p->ai_addrlen) != -1) 
             break; /* Success */
@@ -994,7 +991,7 @@ int open_clientfd(char *hostname, char *port) {
  *       -1 with errno set for other errors.
  */
 /* $begin open_listenfd */
-int open_listenfd(char *port) 
+int open_listenfd(char *port)  // 创建一个监听描述符
 {
     struct addrinfo hints, *listp, *p;
     int listenfd, rc, optval=1;

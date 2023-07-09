@@ -4,7 +4,8 @@
 /* $begin csapp.h */
 #ifndef __CSAPP_H__
 #define __CSAPP_H__
-
+#define _XOPEN_SOURCE
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -28,6 +29,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 
 /* Default file permissions are DEF_MODE & ~DEF_UMASK */
 /* $begin createmasks */
@@ -64,7 +66,7 @@ extern char **environ; /* Defined by libc */
 void unix_error(char *msg);
 void posix_error(int code, char *msg);
 void dns_error(char *msg);
-void gai_error(int code, char *msg);
+void _gai_error(int code, char *msg);
 void app_error(char *msg);
 
 /* Process control wrappers */
