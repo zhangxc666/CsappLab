@@ -1,5 +1,6 @@
 #include "./tiny/csapp.h"
 #include "./sbuf.h"
+#include "./cache.h"
 /* Recommended max cache and object sizes */
 #define MAX_CACHE_SIZE 1048576
 #define MAX_OBJECT_SIZE 102400
@@ -8,6 +9,7 @@
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 static const char *http_prefix="http://";
 static sbuf_t sbuf;
+static cache Cache;
 void debug(char *s){
     printf("%s\n",s);
 }
@@ -60,14 +62,38 @@ void sendRequestHeader(char *method,char *host,char *uri,int fd){
     sprintf(buf,"Proxy-Connection: close\r\n\r\n");
     Rio_writen(fd,buf,strlen(buf));
 }
-void receiveRespense(rio_t *rio,int clientfd) 
+void receiveRespense(rio_t *rio,int clientfd,char *url) 
 {
     char buf[MAXLINE];
-    int n;
+    int n,flag=0;
+    cacheUnit *p=(cacheUnit *)Malloc(sizeof(cacheUnit));
+    initNode(p,MAX_OBJECT_SIZE,url);
+
     // 参考https://github.com/Guo749/ProxyLab/ 的读取，可读二进制文件
     while((n = Rio_readnb(rio, buf, MAXLINE))!= 0){ // 读取server ===> proxy 发来的消息buf
-        Rio_writen(clientfd, buf, n);  // 将buf消息转发至 proxy ===> client 
+        if(flag==1 || (n+p->size)>MAX_OBJECT_SIZE){   // 查找当前的文件是否已超过max_object_size
+            flag=1;
+        }else{
+            strcpy(p->write,buf);                     // 未超过存入缓存中
+            p->size+=n;
+            p->write+=n;
+        }
+        Rio_writen(clientfd, buf, n);                // 将buf消息转发至 proxy ===> client
     }
+    if(flag){//
+        Free(p->value);
+        Free(p);
+        return;
+    }
+    if((Cache.size+p->size)>MAX_CACHE_SIZE){          // 如果超过最大的缓存数
+        while((Cache.size+p->size)<MAX_CACHE_SIZE){   // 一直删除
+            cacheUnit *temp=Cache.head;
+            removeNode(Cache.head,&Cache);
+            Free(temp->value);
+            Free(temp);
+        }
+    } 
+    insertNode(p,&Cache);                              // 没有超过最大的缓存数量
 }
 void clienterror(int fd, char *cause, char *errnum,char *shortmsg, char *longmsg) // 返回一个错误的html给client
 {
@@ -89,12 +115,20 @@ void clienterror(int fd, char *cause, char *errnum,char *shortmsg, char *longmsg
 }
 void handleRequest(int fd){
     char buf[MAXLINE],method[MAXLINE],url[MAXLINE],version[MAXLINE],host[MAXLINE],uri[MAXLINE],port[MAXLINE];
+    cacheUnit *p;
     rio_t rio,server_rio;
     Rio_readinitb(&rio,fd);
     if(!Rio_readlineb(&rio,buf,MAXLINE))return;
     sscanf(buf,"%s %s %s",method,url,version);
+    printf("Url: %s\n",url);
     if(strcasecmp(method,"GET") && strcasecmp(method,"POST")){
         clienterror(fd,method,"501","Not Implemented","Proxy does not implement this method");
+        return;
+    }
+    if(p=findNode(&Cache,url)){ // 如果在缓存中找到host，返回对应的缓存值
+        Rio_writen(fd,p->value,p->size);
+        removeNode(p,&Cache);
+        insertNode(p,&Cache); 
         return;
     }
     if(parseURL(url,host,uri)){
@@ -105,7 +139,7 @@ void handleRequest(int fd){
     int serverfd=Open_clientfd(host,port); // 发送到服务器的
     Rio_readinitb(&server_rio,serverfd);
     sendRequestHeader(method,host,uri,serverfd);
-    receiveRespense(&server_rio,fd);
+    receiveRespense(&server_rio,fd,url);
 }
 void *thread(void *param){
     Pthread_detach(Pthread_self());
@@ -116,6 +150,7 @@ void *thread(void *param){
     }
     
 }
+
 int main(int argc,char **argv)
 {
     int listenfd,connfd;
@@ -129,7 +164,7 @@ int main(int argc,char **argv)
         exit(1);
     }
     listenfd=Open_listenfd(argv[1]);
-
+    initCache(&Cache);
     sbuf_init(&sbuf,MAX_THREAD_NUMBER);
     for(int i=0;i<MAX_THREAD_NUMBER;i++){
         Pthread_create(&tid,NULL,thread,NULL);

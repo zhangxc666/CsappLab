@@ -1,9 +1,9 @@
 /* $begin tinymain */
 /*
- * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the 
+ * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the
  *     GET method to serve static and dynamic content.
  *
- * Updated 11/2019 droh 
+ * Updated 11/2019 droh
  *   - Fixed sprintf() aliasing issue in serve_static(), and clienterror().
  */
 #include "csapp.h"
@@ -16,7 +16,7 @@ void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     int listenfd, connfd;
     char hostname[MAXLINE], port[MAXLINE];
@@ -24,19 +24,21 @@ int main(int argc, char **argv)
     struct sockaddr_storage clientaddr;
 
     /* Check command line args */
-    if (argc != 2) {
+    if (argc != 2)
+    {
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
         exit(1);
     }
 
-    listenfd = Open_listenfd(argv[1]); // ´´½¨Ò»¸ö¼àÌısocket
-    while (1) {
+    listenfd = Open_listenfd(argv[1]); // åˆ›å»ºä¸€ä¸ªç›‘å¬socket
+    while (1)
+    {
         clientlen = sizeof(clientaddr);
-        connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen); // ¿ªÊ¼µÈ´ıclientµÄ·¢ËÍÇëÇó
-        Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0); // »ñÈ¡clientµÄhostºÍport
+        connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);                       // å¼€å§‹ç­‰å¾…clientçš„å‘é€è¯·æ±‚
+        Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0); // è·å–clientçš„hostå’Œport
         printf("Accepted connection from (%s, %s)\n", hostname, port);
-        doit(connfd);                                             // Ö´ĞĞÇëÇó
-        Close(connfd);                                            //line:netp:tiny:close
+        doit(connfd);  // æ‰§è¡Œè¯·æ±‚
+        Close(connfd); // line:netp:tiny:close
     }
 }
 /* $end tinymain */
@@ -45,7 +47,7 @@ int main(int argc, char **argv)
  * doit - handle one HTTP request/response transaction
  */
 /* $begin doit */
-void doit(int fd) 
+void doit(int fd)
 {
     int is_static;
     struct stat sbuf;
@@ -55,37 +57,43 @@ void doit(int fd)
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
-    if (!Rio_readlineb(&rio, buf, MAXLINE))  //line:netp:doit:readrequest
+    if (!Rio_readlineb(&rio, buf, MAXLINE)) // line:netp:doit:readrequest
         return;
     printf("%s", buf);
-    sscanf(buf, "%s %s %s", method, uri, version);       // È¡³ömethod¡¢urlºÍhttp°æ±¾
-    if (strcasecmp(method, "GET")) {                     // Ä¿Ç°½öÖ§³Öget·½·¨
+    sscanf(buf, "%s %s %s", method, uri, version); // å–å‡ºmethodã€urlå’Œhttpç‰ˆæœ¬
+    if (strcasecmp(method, "GET"))
+    { // ç›®å‰ä»…æ”¯æŒgetæ–¹æ³•
         clienterror(fd, method, "501", "Not Implemented",
                     "Tiny does not implement this method");
         return;
-    }                                                    
-    read_requesthdrs(&rio);                              // ¶ÁÇëÇóÍ·
+    }
+    read_requesthdrs(&rio); // è¯»è¯·æ±‚å¤´
 
     /* Parse URI from GET request */
-    is_static = parse_uri(uri, filename, cgiargs);       
-    if (stat(filename, &sbuf) < 0) {                     // ÎÄ¼şÎ´ÕÒµ½
-	    clienterror(fd, filename, "404", "Not found","Tiny couldn't find this file");
-	    return;
-    }                                                    //line:netp:doit:endnotfound
+    is_static = parse_uri(uri, filename, cgiargs);
+    if (stat(filename, &sbuf) < 0)
+    { // æ–‡ä»¶æœªæ‰¾åˆ°
+        clienterror(fd, filename, "404", "Not found", "Tiny couldn't find this file");
+        return;
+    } // line:netp:doit:endnotfound
 
-    if (is_static) { /* Serve static content */          
-        if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) { // Èç¹ûµ±Ç°ÓÃ»§ÎŞ¶ÁÈ¡È¨ÏŞ
-            clienterror(fd, filename, "403", "Forbidden","Tiny couldn't read the file");
-            return;
-	    }
-	    serve_static(fd, filename, sbuf.st_size);        // ·şÎñ¾²Ì¬ÇëÇó
-    }
-    else { /* Serve dynamic content */
-        if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) { // Èç¹ûµ±Ç°ÓÃ»§ÎŞ¶ÁÈ¡È¨ÏŞ
-            clienterror(fd, filename, "403", "Forbidden","Tiny couldn't run the CGI program");
+    if (is_static)
+    { /* Serve static content */
+        if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
+        { // å¦‚æœå½“å‰ç”¨æˆ·æ— è¯»å–æƒé™
+            clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't read the file");
             return;
         }
-        serve_dynamic(fd, filename, cgiargs);            // ·şÎñ¶¯Ì¬ÇëÇó
+        serve_static(fd, filename, sbuf.st_size); // æœåŠ¡é™æ€è¯·æ±‚
+    }
+    else
+    { /* Serve dynamic content */
+        if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode))
+        { // å¦‚æœå½“å‰ç”¨æˆ·æ— è¯»å–æƒé™
+            clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't run the CGI program");
+            return;
+        }
+        serve_dynamic(fd, filename, cgiargs); // æœåŠ¡åŠ¨æ€è¯·æ±‚
     }
 }
 /* $end doit */
@@ -94,13 +102,14 @@ void doit(int fd)
  * read_requesthdrs - read HTTP request headers
  */
 /* $begin read_requesthdrs */
-void read_requesthdrs(rio_t *rp) 
+void read_requesthdrs(rio_t *rp)
 {
     char buf[MAXLINE];
 
     Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
-    while(strcmp(buf, "\r\n")) {          // ÔİÊ±²»´¦ÀíÇëÇóÍ·
+    while (strcmp(buf, "\r\n"))
+    { // æš‚æ—¶ä¸å¤„ç†è¯·æ±‚å¤´
         Rio_readlineb(rp, buf, MAXLINE);
         printf("%s", buf);
     }
@@ -113,99 +122,104 @@ void read_requesthdrs(rio_t *rp)
  *             return 0 if dynamic content, 1 if static
  */
 /* $begin parse_uri */
-int parse_uri(char *uri, char *filename, char *cgiargs)  // ½âÎöurl
+int parse_uri(char *uri, char *filename, char *cgiargs) // è§£æurl
 {
     char *ptr;
 
-    if (!strstr(uri, "cgi-bin")) {                       // ½âÎö¾²Ì¬×ÊÔ´
-        strcpy(cgiargs, "");                             // Çå³ı¶¯Ì¬cgiargs
-        strcpy(filename, ".");                           
-        strcat(filename, uri);                           // ×ª»»Ïà¶ÔÂ·¾¶
-        if (uri[strlen(uri)-1] == '/')                   // Èç¹ûÒÔ '/' ½áÎ²£¬ÉèÖÃÄ¬ÈÏµÄÍøÒ³
-            strcat(filename, "home.html");               
+    if (!strstr(uri, "cgi-bin"))
+    {                        // è§£æé™æ€èµ„æº
+        strcpy(cgiargs, ""); // æ¸…é™¤åŠ¨æ€cgiargs
+        strcpy(filename, ".");
+        strcat(filename, uri);           // è½¬æ¢ç›¸å¯¹è·¯å¾„
+        if (uri[strlen(uri) - 1] == '/') // å¦‚æœä»¥ '/' ç»“å°¾ï¼Œè®¾ç½®é»˜è®¤çš„ç½‘é¡µ
+            strcat(filename, "home.html");
         return 1;
     }
-    else {  /* Dynamic content */                        // ½âÎö¶¯Ì¬×ÊÔ´
-        ptr = index(uri, '?');                           
-        if (ptr) {                                       // Èç¹ûÓĞ²ÎÊı
-            strcpy(cgiargs, ptr+1);
+    else
+    { /* Dynamic content */ // è§£æåŠ¨æ€èµ„æº
+        ptr = index(uri, '?');
+        if (ptr)
+        { // å¦‚æœæœ‰å‚æ•°
+            strcpy(cgiargs, ptr + 1);
             *ptr = '\0';
-	    }
-	    else strcpy(cgiargs, "");                        // Èç¹ûÃ»ÓĞ²ÎÊı
-        strcpy(filename, ".");                           // ¿ªÊ¼×ª»»
-        strcat(filename, uri);                           
-	return 0;
+        }
+        else
+            strcpy(cgiargs, ""); // å¦‚æœæ²¡æœ‰å‚æ•°
+        strcpy(filename, ".");   // å¼€å§‹è½¬æ¢
+        strcat(filename, uri);
+        return 0;
     }
 }
 /* $end parse_uri */
 
 /*
- * serve_static - copy a file back to the client 
+ * serve_static - copy a file back to the client
  */
 /* $begin serve_static */
-void serve_static(int fd, char *filename, int filesize) // ·şÎñ¾²Ì¬×ÊÔ´
+void serve_static(int fd, char *filename, int filesize) // æœåŠ¡é™æ€èµ„æº
 {
     int srcfd;
     char *srcp, filetype[MAXLINE], buf[MAXBUF];
 
     /* Send response headers to client */
-    get_filetype(filename, filetype);    // »ñÈ¡ÎÄ¼şÀàĞÍ£¬Ìî³äÖÁÏìÓ¦Í·
-    sprintf(buf, "HTTP/1.0 200 OK\r\n"); 
+    get_filetype(filename, filetype); // è·å–æ–‡ä»¶ç±»å‹ï¼Œå¡«å……è‡³å“åº”å¤´
+    sprintf(buf, "HTTP/1.0 200 OK\r\n");
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Server: Tiny Web Server\r\n");
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Content-length: %d\r\n", filesize);
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-type: %s\r\n\r\n", filetype); // ×¢Òâ£ºĞèÒª¿ÕĞĞ½áÊøÏìÓ¦Í·
-    Rio_writen(fd, buf, strlen(buf));    //line:netp:servestatic:endserve
+    sprintf(buf, "Content-type: %s\r\n\r\n", filetype); // æ³¨æ„ï¼šéœ€è¦ç©ºè¡Œç»“æŸå“åº”å¤´
+    Rio_writen(fd, buf, strlen(buf));                   // line:netp:servestatic:endserve
 
     /* Send response body to client */
-    srcfd = Open(filename, O_RDONLY, 0); // ´ò¿ªÎÄ¼ş
-    srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // ½«ÎÄ¼şÓ³ÉäÖÁĞéÄâÄÚ´æ
-    Close(srcfd);                       //  ¹Ø±ÕÎÄ¼ş
-    Rio_writen(fd, srcp, filesize);     //line:netp:servestatic:write
-    Munmap(srcp, filesize);             //  ÊÍ·ÅµÄÓ³ÉäµÄĞéÄâÄÚ´æ
+    srcfd = Open(filename, O_RDONLY, 0);                        // æ‰“å¼€æ–‡ä»¶
+    srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // å°†æ–‡ä»¶æ˜ å°„è‡³è™šæ‹Ÿå†…å­˜
+    Close(srcfd);                                               //  å…³é—­æ–‡ä»¶
+    Rio_writen(fd, srcp, filesize);                             // line:netp:servestatic:write
+    Munmap(srcp, filesize);                                     //  é‡Šæ”¾çš„æ˜ å°„çš„è™šæ‹Ÿå†…å­˜
 }
 
 /*
  * get_filetype - derive file type from file name
  */
-void get_filetype(char *filename, char *filetype) 
+void get_filetype(char *filename, char *filetype)
 {
     if (strstr(filename, ".html"))
-	strcpy(filetype, "text/html");
+        strcpy(filetype, "text/html");
     else if (strstr(filename, ".gif"))
-	strcpy(filetype, "image/gif");
+        strcpy(filetype, "image/gif");
     else if (strstr(filename, ".png"))
-	strcpy(filetype, "image/png");
+        strcpy(filetype, "image/png");
     else if (strstr(filename, ".jpg"))
-	strcpy(filetype, "image/jpeg");
+        strcpy(filetype, "image/jpeg");
     else
-	strcpy(filetype, "text/plain");
-}  
+        strcpy(filetype, "text/plain");
+}
 /* $end serve_static */
 
 /*
  * serve_dynamic - run a CGI program on behalf of the client
  */
 /* $begin serve_dynamic */
-void serve_dynamic(int fd, char *filename, char *cgiargs) 
+void serve_dynamic(int fd, char *filename, char *cgiargs)
 {
-    char buf[MAXLINE], *emptylist[] = { NULL };
+    char buf[MAXLINE], *emptylist[] = {NULL};
 
     /* Return first part of HTTP response */
-    sprintf(buf, "HTTP/1.0 200 OK\r\n"); 
+    sprintf(buf, "HTTP/1.0 200 OK\r\n");
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Server: Tiny Web Server\r\n");
     Rio_writen(fd, buf, strlen(buf));
-  
-    if (Fork() == 0) { /* Child */ //line:netp:servedynamic:fork
+
+    if (Fork() == 0)
+    { /* Child */ // line:netp:servedynamic:fork
         /* Real server would set all CGI vars here */
-        setenv("QUERY_STRING", cgiargs, 1); // ÉèÖÃĞéÄâ»·¾³£¬ÀàËÆÓÚ¸øexe´«²Î
-        Dup2(fd, STDOUT_FILENO);            // ½«stdoutÖØ¶¨ÏòÖÁfd£¬×Ó½ø³Ì¿ÉÒÔ·¢ËÍÊı¾İ¸øfd
-        Execve(filename, emptylist, environ); // Ö´ĞĞ¶ş½øÖÆÎÄ¼ş
+        setenv("QUERY_STRING", cgiargs, 1);   // è®¾ç½®è™šæ‹Ÿç¯å¢ƒï¼Œç±»ä¼¼äºç»™exeä¼ å‚
+        Dup2(fd, STDOUT_FILENO);              // å°†stdouté‡å®šå‘è‡³fdï¼Œå­è¿›ç¨‹å¯ä»¥å‘é€æ•°æ®ç»™fd
+        Execve(filename, emptylist, environ); // æ‰§è¡ŒäºŒè¿›åˆ¶æ–‡ä»¶
     }
-    Wait(NULL); /* Parent waits for and reaps child */ //line:netp:servedynamic:wait
+    Wait(NULL); /* Parent waits for and reaps child */ // line:netp:servedynamic:wait
 }
 /* $end serve_dynamic */
 
@@ -213,7 +227,7 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
  * clienterror - returns an error message to the client
  */
 /* $begin clienterror */
-void clienterror(int fd, char *cause, char *errnum,char *shortmsg, char *longmsg) // ·µ»ØÒ»¸ö´íÎóµÄhtml¸øclient
+void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) // è¿”å›ä¸€ä¸ªé”™è¯¯çš„htmlç»™client
 {
     char buf[MAXLINE];
 
@@ -226,7 +240,9 @@ void clienterror(int fd, char *cause, char *errnum,char *shortmsg, char *longmsg
     /* Print the HTTP response body */
     sprintf(buf, "<html><title>Tiny Error</title>");
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "<body bgcolor=""ffffff"">\r\n");
+    sprintf(buf, "<body bgcolor="
+                 "ffffff"
+                 ">\r\n");
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "%s: %s\r\n", errnum, shortmsg);
     Rio_writen(fd, buf, strlen(buf));
