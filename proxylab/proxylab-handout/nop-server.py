@@ -16,5 +16,6 @@ serversocket.listen(5)
 
 while 1:
   channel, details = serversocket.accept()
+  print(channel)
   while 1:
     continue
